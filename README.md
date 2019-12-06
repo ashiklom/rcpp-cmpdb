@@ -20,7 +20,10 @@ rcpp-cmpdb <path>
 ## How it works
 
 1. Copy `Makevars` to a temporary file.
-2. Add the `-MJ`
+2. Add a line like `PKG_CPPFLAGS += -MJ <tempdir>/$@.json` to have `clang` create individual compilation databases for each target as part of the R package build.
+3. Build the R package in a temporary folder. While compiling, it will generate compilation databases for every C++ file.
+4. Combine all the individual compilation database files into a single file: `<path>/src/compilation_commands.json`
+5. Remove all temporary directories, and restore the original `Makevars` file.
 
 ## Helpful links
 
