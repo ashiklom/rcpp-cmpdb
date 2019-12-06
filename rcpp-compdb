@@ -34,6 +34,4 @@ echo "PKG_CPPFLAGS += -MJ \"$JSON_TMPFILES\"" >> "$MAKEVARS" || exit 1
 R CMD INSTALL -l "$TMPDIR" --clean --preclean "$RPKG_PATH" || exit 1
 
 # Combine json files into one
-sed -e '1s/^/[\\n/' -e '$s/,$/\\n]/' "$JSON_TMPDIR/*.json" > "$RPKG_PATH/src/compile_commands.json" || exit 1
-
-cleanup()
+sed -e '1s/^/[/' -e '$s/,$/]/' "$JSON_TMPDIR"/*.json > "$RPKG_PATH/src/compile_commands.json" || exit 1
