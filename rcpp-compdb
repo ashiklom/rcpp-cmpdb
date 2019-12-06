@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+RPKG_PATH=${1:-"."}
+
+MAKEVARS="$RPKG_PATH/src/Makevars"
+MAKEVARS_BAK="$(mktemp)"
+JSON_TMPDIR="$(mktemp -d)"
+JSON_TMPFILES="$JSON_TMPDIR/"'$@'".json"
+TMPDIR="$(mktemp -d)"
+
+function cleanup {
+    # Return original Makevars
+    if [[ -f "$MAKEVARS_BAK" ]]; then
+        echo "Reverting Makevars from $MAKEVARS_BAK"
+        rm "$MAKEVARS"
+        mv "$MAKEVARS_BAK" "$MAKEVARS"
+    fi
+
+    # Remove temporary directories
+    echo "Removing $TMPDIR and $JSON_TMPDIR"
+    rm -rf "$TMPDIR" "$JSON_TMPDIR"
+    echo "Done!"
+}
+
+trap cleanup EXIT
+
+# Create a copy of Makevars
+cp "$MAKEVARS" "$MAKEVARS_BAK" || exit 1
+
+# Add additional PKG_CPPFLAGS to Makevars
+echo "PKG_CPPFLAGS += -MJ \"$JSON_TMPFILES\"" >> "$MAKEVARS" || exit 1
+
+# Install package to temporary location
+R CMD INSTALL -l "$TMPDIR" --clean --preclean "$RPKG_PATH" || exit 1
+
+# Combine json files into one
+sed -e '1s/^/[\\n/' -e '$s/,$/\\n]/' "$JSON_TMPDIR/*.json" > "$RPKG_PATH/src/compile_commands.json" || exit 1
+
+cleanup()
